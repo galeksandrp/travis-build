@@ -12,6 +12,10 @@ module Travis
 
         ELM_TEST_REQUIRED_NODE_VERSION = '4.0.0'
 
+        def initialize(*args)
+          super
+        end
+
         def export
           super
           sh.export 'TRAVIS_ELM_VERSION', elm_version, echo: false
