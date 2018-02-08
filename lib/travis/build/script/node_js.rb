@@ -8,6 +8,13 @@ module Travis
 
         NPM_QUIET_TREE_VERSION = '5'
 
+        attr_accessor :fold_index
+
+        def initialize(*args)
+          super
+          @fold_index = 1
+        end
+
         def export
           super
           if node_js_given_in_config?
@@ -199,12 +206,14 @@ module Travis
           end
 
           def npm_install(args)
-            sh.fold "install.npm" do
+            sh.fold "install.npm.#{fold_index}" do
               sh.cmd "npm install #{args}", retry: true
               sh.if "$(vers2int `npm -v`) -gt $(vers2int #{NPM_QUIET_TREE_VERSION})" do
                 sh.cmd "npm ls", echo: true, assert: false
               end
             end
+
+            fold_index += 1
           end
 
           def install_yarn
