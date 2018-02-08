@@ -22,10 +22,6 @@ module Travis
           super
 
           config[:node_js] ||= DEFAULT_NODE_VERSION
-
-          sh.if '! -d sysconfcpus/bin' do
-            install_sysconfcpus
-          end
         end
 
         def announce
@@ -37,13 +33,18 @@ module Travis
         def setup
           super
 
-          install_elm
-          install_elm_test
+          sh.if '! -d sysconfcpus/bin' do
+            install_sysconfcpus
+          end
+
+          sh.fold 'install.elm' do
+            install_elm
+            install_elm_test
+          end
         end
 
         def script
-          sh.cmd 'elm-format --validate .'
-          sh.cmd 'elm-test'
+          sh.cmd 'elm-format --validate . && elm-test'
         end
 
         def setup_cache
