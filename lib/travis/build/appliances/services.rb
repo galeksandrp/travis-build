@@ -21,23 +21,34 @@ module Travis
                 send(service_apply_method)
                 next
               end
-              sh.cmd "sudo service #{name.shellescape} start", assert: false, echo: true, timing: true
+              command = start_daemon_command(name)
+              sh.cmd command, sudo: true, assert: false, echo: true, timing: true
             end
             sh.raw 'sleep 3'
           end
         end
 
         def apply?
-          services.any?
+          services.any? && data.is_linux?
         end
 
+        def start_daemon_command(name)
+          if data.has_upstart?
+            return "service #{name.shellescape} start"
+          elsif data.has_systemd?
+            return "systemctl start #{name.shellescap}"
+          end
+        end
+          
         def apply_mongodb
-          sh.if "$(lsb_release -cs) != 'precise'" do
-            sh.cmd 'sudo service mongod start', assert: false, echo: true, timing: true
+          if data.is_precise?
+            command = 'service mongod start'
+          elsif data.is_trusty?
+            command = 'service mongodb start'
+          else
+            command = 'systemctl start mongodb'
           end
-          sh.else do
-            sh.cmd 'sudo service mongodb start', assert: false, echo: true, timing: true
-          end
+          sh.cmd command, assert: false, echo: true, timing: true, sudo: true
         end
 
         def apply_mysql
@@ -51,8 +62,19 @@ module Travis
               unset -f travis_mysql_ping
             }
           BASH
-          sh.cmd 'sudo service mysql start', assert: false, echo: true, timing: true
+          command = start_daemon_command('mysql')
+          sh.cmd command, sudo: true, assert: false, echo: true, timing: true
           sh.cmd 'travis_mysql_ping', assert: false, echo: false, timing: false
+        end
+
+        def apply_postgresql
+          # This will be handled by addons if used
+          return if data[:config][:addons].key? :postgresql
+          if data.has_upstart?
+            sh.cmd 'service postgresql start', assert: false, sudo: true
+          else
+            sh.cmd 'systemctl start postgresql@9.6-main', assert: false, sudo: true, echo: true
+          end
         end
 
         private
