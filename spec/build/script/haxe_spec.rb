@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Travis::Build::Script::Haxe, :sexp do
-  let(:data)   { payload_for(:push, :haxe) }
+  let(:data)   { payload_for(:push, :haxe, dist: :trusty, os: :linux) }
   let(:script) { described_class.new(data) }
   subject      { script.sexp }
   it           { store_example }

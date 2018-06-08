@@ -36,7 +36,7 @@ module Travis
           if data.has_upstart?
             return "service #{name.shellescape} start"
           elsif data.has_systemd?
-            return "systemctl start #{name.shellescap}"
+            return "systemctl start #{name.shellescape}"
           end
         end
           
@@ -69,7 +69,7 @@ module Travis
 
         def apply_postgresql
           # This will be handled by addons if used
-          return if data[:config][:addons].key? :postgresql
+          return if data&.[](:config)&.[](:addons)&.[](:postgresql)
           if data.has_upstart?
             sh.cmd 'service postgresql start', assert: false, sudo: true
           else
